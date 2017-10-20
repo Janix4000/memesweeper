@@ -26,8 +26,7 @@ Game::Game( MainWindow& wnd )
 	:
 	wnd( wnd ),
 	gfx( wnd ),
-	menu( { gfx.GetRect().GetCenter().x,200 } ),
-	field( gfx.GetRect().GetCenter(),4 )
+	menu( { gfx.GetRect().GetCenter().x,200 } )
 {
 }
 
@@ -46,23 +45,31 @@ void Game::UpdateModel()
 		const auto e = wnd.mouse.Read();
 		if( state == State::Memesweeper )
 		{
-			if( field.GetState() == MemeField::State::Memeing )
+			if( field->GetState() == MemeField::State::Memeing )
 			{
 				if( e.GetType() == Mouse::Event::Type::LPress )
 				{
 					const Vei2 mousePos = e.GetPos();
-					if( field.GetRect().Contains( mousePos ) )
+					if( field->GetRect().Contains( mousePos ) )
 					{
-						field.OnRevealClick( mousePos );
+						field->OnRevealClick( mousePos );
 					}
 				}
 				else if( e.GetType() == Mouse::Event::Type::RPress )
 				{
 					const Vei2 mousePos = e.GetPos();
-					if( field.GetRect().Contains( mousePos ) )
+					if( field->GetRect().Contains( mousePos ) )
 					{
-						field.OnFlagClick( mousePos );
+						field->OnFlagClick( mousePos );
 					}
+				}
+			}
+			else
+			{
+				if (e.GetType() == Mouse::Event::Type::LPress)
+				{
+					DestroyField();
+					state = State::SelectionMenu;
 				}
 			}
 		}
@@ -72,20 +79,39 @@ void Game::UpdateModel()
 			switch( s )
 			{
 			case SelectionMenu::Size::Small:
+				state = State::Memesweeper;
+				CreateField(8, 6, 4);
+				break;
 			case SelectionMenu::Size::Medium:
+				state = State::Memesweeper;
+				CreateField(12, 10, 10);
+				break;
 			case SelectionMenu::Size::Large:
 				state = State::Memesweeper;
+				CreateField(16, 12, 20);
+				break;
 			}
 		}
 	}
+}
+
+void Game::CreateField(int width, int height, int nMemes)
+{
+	field = new MemeField(gfx.GetRect().GetCenter(), width, height, nMemes);
+}
+
+void Game::DestroyField()
+{
+	delete field;
+	field = nullptr;
 }
 
 void Game::ComposeFrame()
 {
 	if( state == State::Memesweeper )
 	{
-		field.Draw( gfx );
-		if( field.GetState() == MemeField::State::Winrar )
+		field->Draw( gfx );
+		if( field->GetState() == MemeField::State::Winrar )
 		{
 			SpriteCodex::DrawWin( gfx.GetRect().GetCenter(),gfx );
 		}
